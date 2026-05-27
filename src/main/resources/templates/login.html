@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskSphere | Sign In</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body class="auth-shell">
+<main class="auth-card">
+    <section class="hero-panel">
+        <img src="/images/logo.png" alt="TaskSphere Logo" class="hero-logo">
+        <h1>Smart Task Management System</h1>
+    </section>
+
+    <section class="form-panel">
+        <div class="panel-header">
+            <h2>Log in</h2>
+        </div>
+
+        <div class="alert success" th:if="${successMessage}" th:text="${successMessage}"></div>
+        <div class="alert error" th:if="${errorMessage}" th:text="${errorMessage}"></div>
+
+        <form th:action="@{/login}" th:object="${loginForm}" method="post" class="stack-form">
+            <label>
+                <span>Role</span>
+                <select th:field="*{role}" class="form-select">
+                    <option th:each="role : ${roles}" th:value="${role.name()}" th:text="${#strings.replace(role.name(), '_', ' ')}"></option>
+                </select>
+                <small class="field-error" th:errors="*{role}"></small>
+            </label>
+
+            <label>
+                <span>Email or enrollment number</span>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                    <input type="text" th:field="*{identifier}" class="form-control" placeholder="Enter your identifier">
+                </div>
+                <small class="field-error" th:errors="*{identifier}"></small>
+            </label>
+
+            <label>
+                <span>Password</span>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                    <input type="password"
+                           id="passwordField"
+                           th:field="*{password}"
+                           class="form-control"
+                           placeholder="Enter your password">
+
+                    <button type="button"
+                            class="input-group-text bg-white"
+                            onclick="togglePassword()">
+                        <i id="eyeIcon" class="bi bi-eye"></i>
+                    </button>
+                </div>
+                <small class="field-error" th:errors="*{password}"></small>
+            </label>
+            <button type="submit" class="primary-button">Log in</button>
+
+            <div style="text-align:right; margin-top:5px;">
+                <a th:href="@{/forgot-password}">Forgot Password?</a>
+            </div>
+
+        </form>
+    </section>
+</main>
+<script>
+    function togglePassword() {
+        const field = document.getElementById("passwordField");
+        const icon = document.getElementById("eyeIcon");
+
+        if (field.type === "password") {
+            field.type = "text";
+            icon.classList.replace("bi-eye", "bi-eye-slash");
+        } else {
+            field.type = "password";
+            icon.classList.replace("bi-eye-slash", "bi-eye");
+        }
+    }
+</script>
+</body>
+</html>

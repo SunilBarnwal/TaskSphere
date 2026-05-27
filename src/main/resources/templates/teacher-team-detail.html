@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskSphere | Team Detail</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+</head>
+<body class="dashboard-body">
+<div class="dashboard-app">
+    <aside class="dashboard-sidebar">
+        <div class="brand-lockup">
+            <div class="brand-mark"><i class="bi bi-kanban-fill"></i></div>
+            <div class="brand-copy">
+                <span class="title">TaskSphere</span>
+                <span class="subtitle">Team Detail</span>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <a class="nav-link" th:href="@{/teacher/dashboard}"><i class="bi bi-arrow-left"></i><span>Back to Dashboard</span></a>
+            <a class="nav-link active" href="#team-members"><i class="bi bi-people"></i><span>Members</span></a>
+            <a class="nav-link" href="#team-activity"><i class="bi bi-clock-history"></i><span>Activity</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            Welcome, <span th:text="${currentUser.displayName()}">Teacher Name</span>
+        </div>
+    </aside>
+
+    <main class="dashboard-main">
+        <div class="container-fluid">
+        <div class="dashboard-topbar">
+            <div class="d-flex align-items-center gap-3 flex-grow-1">
+                <button type="button"
+                        class="btn btn-light toggle-btn"
+                        data-sidebar-toggle>
+                    <i class="bi bi-list"></i>
+                </button>
+                <div>
+                    <h1 class="h3 mb-0" th:text="${team.team().teamName() + ' - ' + team.team().taskName()}"></h1>
+                    <p class="text-secondary mb-0">Manage team members and tasks.</p>
+                </div>
+            </div>
+            <div class="topbar-actions">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editTeamModal">
+                    <i class="bi bi-pencil-square me-1"></i> Edit Team
+                </button>
+                <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="btn btn-outline-danger"><i class="bi bi-box-arrow-right me-1"></i> Logout</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="content-grid">
+
+            <div class="stats-grid">
+                <div class="summary-card">
+                    <div class="icon"><i class="bi bi-people-fill"></i></div>
+                    <div class="text-secondary small">Members</div>
+                    <h3 th:text="${#lists.size(team.members())}"></h3>
+                </div>
+                <div class="summary-card">
+                    <div class="icon"><i class="bi bi-person-badge"></i></div>
+                    <div class="text-secondary small">Leader</div>
+                    <h3 class="h5 mb-0" th:text="${team.leader() != null ? team.leader().studentName() : 'Unassigned'}"></h3>
+                </div>
+                <div class="summary-card">
+                    <div class="icon"><i class="bi bi-calendar-event"></i></div>
+                    <div class="text-secondary small">Deadline</div>
+                    <h3 class="h5 mb-0" th:text="${#temporals.format(team.team().deadline(), 'dd MMM yyyy')}"></h3>
+                </div>
+                <div class="summary-card">
+                    <div class="icon"><i class="bi bi-file-earmark-check"></i></div>
+                    <div class="text-secondary small">Completion Proof</div>
+                    <h3 class="h5 mb-0" th:text="${team.team().screenshotPath() != null ? 'Uploaded' : 'Pending'}"></h3>
+                </div>
+            </div>
+
+            <div class="card-grid-2">
+                <section class="surface-card" id="team-members">
+                    <div class="section-title">
+                        <div>
+                            <h2 class="h5">Team Members</h2>
+                        </div>
+                    </div>
+                    <div class="table-shell">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Contact</th>
+                                <th>Enrollment</th>
+                                <th>Role</th>
+                                <th>Actions</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <tr th:each="member : ${team.members()}">
+                                <td>
+                                    <div class="fw-semibold" th:text="${member.studentName()}"></div>
+                                    <div class="small text-secondary" th:text="${member.program()}"></div>
+                                </td>
+
+                                <td th:text="${member.email()}"></td>
+
+                                <td th:text="${member.contact()}"></td>
+
+                                <td th:text="${member.enrollmentNumber()}"></td>
+                                <td>
+                                    <span class="badge" th:classappend="${member.leader()} ? ' text-bg-success' : ' text-bg-secondary'"
+                                          th:text="${member.leader()} ? 'Leader' : 'Member'"></span>
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <!-- MAKE LEADER -->
+                                        <form th:if="${!member.leader()}"
+                                              th:action="@{'/teacher/teams/' + ${team.team().teamId()} + '/leader/' + ${member.studentId()}}"
+                                              method="post">
+
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-person-check me-1"></i> Make leader
+                                            </button>
+                                        </form>
+
+                                        <!-- REMOVE -->
+                                        <form th:if="${!member.leader()}"
+                                              th:action="@{'/teacher/teams/' + ${team.team().teamId()} + '/members/' + ${member.studentId()} + '/remove'}"
+                                              method="post"
+                                              onsubmit="return confirm('Are you sure you want to remove this member?')">
+
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="bi bi-person-dash me-1"></i> Remove
+                                            </button>
+                                        </form>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary" disabled th:if="${member.leader()}">Leader cannot be removed directly</button>
+                                    </div>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="surface-card">
+                    <div class="section-title">
+                        <div>
+                            <h2 class="h5">Completion Evidence</h2>
+                        </div>
+
+                    </div>
+                    <div th:if="${team.team().screenshotPath() == null}" class="empty-state">No completion file uploaded yet.</div>
+<!--                    screeshot-->
+                    <div th:if="${team.team().screenshotPath() != null}">
+
+                        <!-- IMAGE PREVIEW -->
+                        <div th:if="${#strings.endsWith(team.team().screenshotPath().toLowerCase(), '.png')
+              or #strings.endsWith(team.team().screenshotPath().toLowerCase(), '.jpg')
+              or #strings.endsWith(team.team().screenshotPath().toLowerCase(), '.jpeg')
+              or #strings.endsWith(team.team().screenshotPath().toLowerCase(), '.gif')
+              or #strings.endsWith(team.team().screenshotPath().toLowerCase(), '.webp')}">
+
+                            <img th:src="@{'/uploads/' + ${team.team().screenshotPath()}}"
+                                 class="img-fluid rounded-4 border"
+                                 style="cursor:pointer"
+                                 data-bs-toggle="modal"
+                                 data-bs-target="#imageModal"
+                                 onclick="setImage(this.src)">
+                        </div>
+
+                        <!-- DOCUMENT VIEW -->
+                        <div th:if="${#strings.endsWith(team.team().screenshotPath().toLowerCase(), '.pdf')
+                                or #strings.endsWith(team.team().screenshotPath().toLowerCase(), '.docx')}"
+                                class="d-grid gap-2">
+                            <a class="btn btn-primary"
+                               th:href="@{'/uploads/' + ${team.team().screenshotPath()}}"
+                               download>
+
+                                <i class="bi"
+                                   th:classappend="${#strings.endsWith(team.team().screenshotPath().toLowerCase(), '.pdf')}
+                                   ? ' bi-file-earmark-pdf'
+                                   : ' bi-file-earmark-word'"></i>
+                                Download Document
+                            </a>
+
+                        </div>
+
+                    </div>
+                </section>
+                <section class="surface-card mt-4"
+                         th:if="${team.team().screenshotPath() != null
+                        and team.team().status().name() == 'COMPLETED'
+                        and team.team().reviewStatus() != 'APPROVED'}">
+
+                    <div class="section-title">
+                        <div>
+                            <h2 class="h5">Teacher Review</h2>
+
+                            <p class="text-secondary mb-0">
+                                Approve or reject uploaded submission.
+                            </p>
+                        </div>
+                    </div>
+
+                    <form th:action="@{'/teacher/team/review/' + ${team.team().teamId()}}"
+                          method="post">
+
+                <textarea
+                class="form-control mb-3"
+                name="feedback"
+                rows="4"
+                placeholder="Write feedback for the team"></textarea>
+
+                        <div class="d-flex gap-2 flex-wrap">
+
+                            <button type="submit"
+                                    name="action"
+                                    value="approve"
+                                    class="btn btn-success">
+
+                                <i class="bi bi-check-circle me-1"></i>
+                                Accept Submission
+                            </button>
+
+                            <button type="submit"
+                                    name="action"
+                                    value="reject"
+                                    class="btn btn-danger">
+
+                                <i class="bi bi-arrow-repeat me-1"></i>
+                                Reject & Request Re-upload
+                            </button>
+
+                        </div>
+                    </form>
+
+                </section>
+                <div class="surface-card mt-4"
+                     th:if="${team.team().reviewStatus() == 'APPROVED'}">
+
+                    <div class="alert alert-success mb-0">
+                        Submission approved successfully.
+                    </div>
+                </div>
+            </div>
+
+            <section class="surface-card" id="team-activity">
+                <div class="section-title">
+                    <div>
+                        <h2 class="h5">Activity Feed</h2>
+                        <p class="text-secondary mb-0">Recent actions from the teacher workspace.</p>
+                    </div>
+                </div>
+                <div th:if="${#lists.isEmpty(activityLogs)}" class="empty-state">No recorded activity for this teacher yet.</div>
+                <div id="activity"
+                     th:if="${!#lists.isEmpty(activityLogs)}">
+                    <div class="activity-item"
+                         th:each="log : ${activityLogs}">
+
+                        <div class="activity-dot level-info"><i class="bi bi-activity"></i></div>
+                        <div>
+                            <div class="fw-semibold" th:text="${log.description()}"></div>
+                            <div class="small text-secondary" th:text="${#temporals.format(log.createdAt(), 'dd MMM yyyy HH:mm')}"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+        </div>
+    </main>
+</div>
+
+<div class="toast-stack" data-toast-container></div>
+<div th:if="${successMessage}" data-toast-message th:attr="data-toast-message=${successMessage},data-toast-level='success'"></div>
+<div th:if="${errorMessage}" data-toast-message th:attr="data-toast-message=${errorMessage},data-toast-level='error'"></div>
+
+<div class="modal fade" id="editTeamModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <div>
+                    <h2 class="modal-title h4 mb-1">Edit Team</h2>
+                    <p class="text-secondary mb-0">Update task details and add new members without leaving this page.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body pt-0">
+                <form th:action="@{'/teacher/teams/' + ${team.team().teamId()} + '/edit'}"
+                      th:object="${updateTeamForm}" method="post" class="row g-3">
+                    <div th:if="${#fields.hasAnyErrors()}" data-open-modal="editTeamModal"></div>
+                    <div class="col-md-6">
+                        <label class="form-label">Task name</label>
+                        <input type="text" class="form-control" th:field="*{taskName}">
+                        <div class="text-danger small mt-1" th:errors="*{taskName}"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Deadline</label>
+                        <input type="text"
+                               class="form-control deadline-picker"
+                               th:field="*{deadline}"
+                               required>
+                        <div class="text-danger small mt-1" th:errors="*{deadline}"></div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Team Members</label>
+
+                        <table class="table table-bordered" id="memberTable">
+                            <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Contact</th>
+                                <th>Enrollment</th>
+                                <th>Leader</th>
+                                <th>Remove</th>
+                            </tr>
+                            </thead>
+
+                            <tbody id="memberTableBody">
+                            <tr th:each="m, i : *{members}">
+                                <td>
+                                    <input type="text" required th:name="|members[${i.index}].name|" th:value="${m.name}" class="form-control"/>
+                                </td>
+                                <td>
+                                    <input type="email"
+                                           required
+                                           th:name="|members[${i.index}].email|"
+                                           th:value="${m.email}"
+                                           class="form-control member-email"/>
+
+                                    <div class="text-danger small duplicate-email d-none">
+                                        Email already exists
+                                    </div>
+                                </td>
+                                <td>
+                                    <input type="tel"
+                                           required
+                                           pattern="[0-9]{10}"
+                                           maxlength="10"
+                                           inputmode="numeric"
+                                           th:name="|members[${i.index}].contact|"
+                                           th:value="${m.contact}"
+                                           class="form-control"
+                                           />
+                                </td>
+                                <td>
+                                    <input type="text"
+                                           required
+                                           th:name="|members[${i.index}].enrollment|"
+                                           th:value="${m.enrollment}"
+                                           class="form-control member-enrollment text-uppercase"
+                                           oninput="this.value = this.value.toUpperCase()"/>
+
+                                    <div class="text-danger small duplicate-enrollment d-none">
+                                        Enrollment already exists
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <input type="radio" th:name="leaderIndex" th:value="${i.index}" th:checked="${m.leader}" required/>
+                                </td>
+                                <td>
+                                    <button type="button"
+                                            class="btn btn-danger btn-sm remove-btn">
+                                        Remove
+                                    </button>
+                                </td>
+
+
+                                <input type="hidden" th:name="|members[${i.index}].studentId|" th:value="${m.studentId}"/>
+                            </tr>
+                            </tbody>
+                        </table>
+
+                        <button type="button" class="btn btn-secondary mt-2" onclick="addRow()">
+                            + Add Member
+                        </button>
+
+                    </div>
+                    <div class="col-12 d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="createTeamBtn">Save changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h2 class="modal-title h5 mb-0">Confirm Action</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0" data-confirm-text>Are you sure?</p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" data-confirm-accept>Continue</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content bg-dark">
+
+            <div class="modal-header border-0">
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body text-center">
+                <img id="previewImage" src="" style="max-width:100%; max-height:90vh;">
+            </div>
+
+            <div class="modal-footer border-0 justify-content-center">
+                <a id="downloadBtn" class="btn btn-success" download>
+                    <i class="bi bi-download"></i> Download
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script th:src="@{/js/app.js}"></script>
+</body>
+</html>
